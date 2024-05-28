@@ -24,7 +24,6 @@
  from physicians and researchers on their experience.
 */
 
-
 import ij.IJ;
 import ij.ImagePlus;
 import ij.plugin.PlugIn;
@@ -33,12 +32,11 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.List;
 import org.scijava.vecmath.Point3f;
 import customnode.CustomPointMesh;
 import ij3d.Content;
 import ij3d.Image3DUniverse;
+
 
 public class RI_UserInterface implements PlugIn {
 
@@ -61,7 +59,14 @@ public class RI_UserInterface implements PlugIn {
         ln_avg.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                IJ.log("Linear pressed");
+                Linear_RE linear_algm = new Linear_RE();
+                ImagePlus imp = IJ.getImage();
+                if (imp != null) {
+                    linear_algm.setup("", imp);
+                    linear_algm.run(imp.getProcessor());
+                } else {
+                    IJ.showMessage("No image is currently open.");
+                }
             }
         });
         
