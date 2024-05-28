@@ -1,12 +1,12 @@
 /*
     This file is part of ########.
 
-    VolumetricAnalysis_Medicine is free software: you can redistribute it and/or modify
+    Resolution_Enhancement is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
 
-    VolumetricAnalysis_Medicine is distributed in the hope that it will be useful,
+    Resolution_Enhancement is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
     GNU General Public License for more details.
@@ -15,7 +15,8 @@
     along with VolumetricAnalysis_Medicine. If not, see <http://www.gnu.org/licenses/>.
 
 
- WRITE PURPOSE AND INTRODUCTION HERE
+ PURPOSE: Resolution_Enhancement attempts to provide a package of various functions useful in
+ analyzing CT scan images in FIJI Is Just ImageJ.
 
  Author: Jonathan Collard de Beaufort, jonathancdb@gmail.com
  May 2024
