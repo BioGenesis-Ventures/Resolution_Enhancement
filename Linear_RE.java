@@ -24,8 +24,10 @@
  from physicians and researchers on their experience.
 */
 
+
 import ij.IJ;
 import ij.ImagePlus;
+import ij.plugin.PlugIn;
 import ij.ImageStack;
 import ij.plugin.filter.PlugInFilter;
 import ij.process.ImageProcessor;
