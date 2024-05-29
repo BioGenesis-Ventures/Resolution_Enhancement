@@ -24,6 +24,7 @@
  If you download and/or use this script, please email me. I am curious to hear
  from physicians and researchers on their experience.
 */
+package Resolution_Enhancement;
 
 import ij.IJ;
 import ij.ImagePlus;
@@ -37,7 +38,6 @@ import org.scijava.vecmath.Point3f;
 import customnode.CustomPointMesh;
 import ij3d.Content;
 import ij3d.Image3DUniverse;
-
 
 
 public class RI_UserInterface implements PlugIn {

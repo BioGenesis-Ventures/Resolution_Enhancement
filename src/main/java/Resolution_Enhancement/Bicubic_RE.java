@@ -16,7 +16,7 @@
 
 
  PURPOSE: This code divides a stack of CT scans by 2 in every dimension and performs a 
- quadratic average to find the new voxel value based on neighboring voxels.
+ bicubic average to find the new voxel value based on neighboring voxels.
 
  Author: Jonathan Collard de Beaufort, jonathancdb@gmail.com
  May 2024
@@ -25,6 +25,8 @@
  from physicians and researchers on their experience.
 */
 
+
+package Resolution_Enhancement;
 
 import ij.IJ;
 import ij.ImagePlus;
@@ -35,7 +37,7 @@ import ij.process.ImageProcessor;
 import ij.process.ColorProcessor;
 import ij.process.StackProcessor;
 
-public class Quadratic_RE implements PlugInFilter {
+public class Bicubic_RE implements PlugInFilter {
 
     @Override
     public int setup(String arg, ImagePlus imp) {
