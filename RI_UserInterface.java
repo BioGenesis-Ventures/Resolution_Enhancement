@@ -39,6 +39,7 @@ import ij3d.Content;
 import ij3d.Image3DUniverse;
 
 
+
 public class RI_UserInterface implements PlugIn {
 
     @Override
@@ -60,14 +61,14 @@ public class RI_UserInterface implements PlugIn {
         ln_avg.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                Linear_RE linear_algm = new Linear_RE();
-                ImagePlus imp = IJ.getImage();
-                if (imp != null) {
-                    linear_algm.setup("", imp);
-                    linear_algm.run(imp.getProcessor());
-                } else {
-                    IJ.showMessage("No image is currently open.");
-                }
+                // Create an instance of Linear_RE
+                Linear_RE linearRE = new Linear_RE();
+                // Get the ImageProcessor from ImagePlus
+                ImageProcessor ip = imagePlus.getProcessor();
+                // Call the performEnhancement method
+                linearRE.performEnhancement(ip);
+                // Update the ImagePlus with the enhanced ImageProcessor
+                imagePlus.updateAndDraw();
             }
         });
         

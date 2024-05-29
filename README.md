@@ -16,6 +16,8 @@ This file is part of the **Resolution_Enhancement** software.
 
 ## Introduction <a name="introduction"></a>
 
+This software is designed to improve the resolution of medical images
+
 ## PlugIn Requirements <a name="requirements"></a>
 
 ### Open a CT Scan <a name="open_a_ct_scan"></a>
