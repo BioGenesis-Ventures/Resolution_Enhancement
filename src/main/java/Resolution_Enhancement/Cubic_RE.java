@@ -156,7 +156,7 @@ public class Cubic_RE implements PlugInFilter {
 
     private int cubicAverage(int... values) {
         
-    // CHANGE METHOD HERE
+        // CHANGE METHOD HERE
 
         return 0;
     }
