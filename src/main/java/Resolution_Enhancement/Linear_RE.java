@@ -14,9 +14,8 @@
     You should have received a copy of the GNU General Public License
     along with VolumetricAnalysis_Medicine. If not, see <http://www.gnu.org/licenses/>.
 
-
  PURPOSE: This code divides a stack of CT scans by 2 in every dimension and performs a 
- linear average to find the new voxel value based on neighboring voxels.
+ average to find the new voxel value based on neighboring voxels.
 
  Author: Jonathan Collard de Beaufort, jonathancdb@gmail.com
  May 2024
@@ -33,14 +32,12 @@ import ij.plugin.PlugIn;
 import ij.ImageStack;
 import ij.plugin.filter.PlugInFilter;
 import ij.process.ImageProcessor;
-import ij.process.ColorProcessor;
-import ij.process.StackProcessor;
 
 public class Linear_RE implements PlugInFilter {
 
     @Override
     public int setup(String arg, ImagePlus imp) {
-        return DOES_8G | DOES_RGB | STACK_REQUIRED; // Accepts 8-bit grayscale and RGB stacks
+        return DOES_ALL;
     }
 
     @Override
@@ -53,43 +50,106 @@ public class Linear_RE implements PlugInFilter {
         int newWidth = width * 2;
         int newHeight = height * 2;
         int newDepth = depth * 2;
+        
+        int totalCalculations = width * height * depth;
+        int calculationsCount = 0;
+        long startTime = System.currentTimeMillis();
 
         ImageStack newStack = new ImageStack(newWidth, newHeight);
+
+        // Initialize each slice of the new stack
+        for (int i = 0; i < newDepth; i++) {
+            newStack.addSlice(stack.getProcessor(1).createProcessor(newWidth, newHeight));
+        }
 
         for (int z = 0; z < depth; z++) {
             ImageProcessor currentSlice = stack.getProcessor(z + 1);
             ImageProcessor prevSlice = (z > 0) ? stack.getProcessor(z) : currentSlice;
             ImageProcessor nextSlice = (z < depth - 1) ? stack.getProcessor(z + 2) : currentSlice;
 
-            ImageProcessor newIp = (ip instanceof ColorProcessor) ? new ColorProcessor(newWidth, newHeight) : ip.createProcessor(newWidth, newHeight);
-
             for (int y = 0; y < height; y++) {
                 for (int x = 0; x < width; x++) {
-                    int[] pixels = new int[8];
-                    pixels[0] = currentSlice.getPixel(x, y);
-                    pixels[1] = (x < width - 1) ? currentSlice.getPixel(x + 1, y) : pixels[0];
-                    pixels[2] = (y < height - 1) ? currentSlice.getPixel(x, y + 1) : pixels[0];
-                    pixels[3] = (x < width - 1 && y < height - 1) ? currentSlice.getPixel(x + 1, y + 1) : pixels[0];
-                    pixels[4] = prevSlice.getPixel(x, y);
-                    pixels[5] = (x < width - 1) ? prevSlice.getPixel(x + 1, y) : pixels[4];
-                    pixels[6] = (y < height - 1) ? prevSlice.getPixel(x, y + 1) : pixels[4];
-                    pixels[7] = (x < width - 1 && y < height - 1) ? prevSlice.getPixel(x + 1, y + 1) : pixels[4];
+                    int[] coef_x = {1, -1, -1, 1};
+                    int[] coef_y = {1, 1, -1, -1};
+                    
+                    // Update calculation status
+                    calculationsCount += 1;
+                    int percentageIncrement = (int) Math.ceil(totalCalculations / 10.0);
+            
+		            if (calculationsCount % percentageIncrement == 0) {
+		                int percentage = (calculationsCount * 100) / totalCalculations;
+		                IJ.log("Status: " + percentage + "%");
+		            }
 
-                    int avg1 = average(pixels[0], pixels[1], pixels[4], pixels[5]);
-                    int avg2 = average(pixels[0], pixels[2], pixels[4], pixels[6]);
-                    int avg3 = average(pixels[1], pixels[3], pixels[5], pixels[7]);
-                    int avg4 = average(pixels[2], pixels[3], pixels[6], pixels[7]);
+                    for (int dz = 0; dz < 2; dz++) {
+                        for (int dy = 0; dy < 2; dy++) {
+                            for (int dx = 0; dx < 2; dx++) {
+                                int subpixelX = 2 * x + dx;
+                                int subpixelY = 2 * y + dy;
+                                int subpixelZ = 2 * z + dz;
+                                
+                                int[] neighbors = new int[4];
+                                
+                                if (dx == 0 || dy == 0 || dz == 0) {
+                                	neighbors[0] = getPixelSafe(currentSlice, x - 1, y);
+                                	neighbors[1] = getPixelSafe(currentSlice, x, y - 1);
+                                	neighbors[2] = getPixelSafe(currentSlice, x - 1, y - 1);
+                                	neighbors[3] = getPixelSafe(prevSlice, x, y);
+                                } else if (dx == 1 || dy == 0 || dz == 0) {
+                                	neighbors[0] = getPixelSafe(currentSlice, x, y - 1);
+                                	neighbors[1] = getPixelSafe(currentSlice, x + 1, y);
+                                	neighbors[2] = getPixelSafe(currentSlice, x + 1, y - 1);
+                                	neighbors[3] = getPixelSafe(prevSlice, x, y);
+                                } else if (dx == 0 || dy == 1 || dz == 0) {
+                                	neighbors[0] = getPixelSafe(currentSlice, x - 1, y);
+                                	neighbors[1] = getPixelSafe(currentSlice, x - 1, y + 1);
+                                	neighbors[2] = getPixelSafe(currentSlice, x, y + 1);
+                                	neighbors[3] = getPixelSafe(prevSlice, x, y);
+                                } else if (dx == 1 || dy == 1 || dz == 0) {
+                                	neighbors[0] = getPixelSafe(currentSlice, x, y + 1);
+                                	neighbors[1] = getPixelSafe(currentSlice, x + 1, y + 1);
+                                	neighbors[2] = getPixelSafe(currentSlice, x + 1, y);
+                                	neighbors[3] = getPixelSafe(prevSlice, x, y);
+                                } else if (dx == 0 || dy == 0 || dz == 1) {
+                                	neighbors[0] = getPixelSafe(currentSlice, x - 1, y);
+                                	neighbors[1] = getPixelSafe(currentSlice, x, y - 1);
+                                	neighbors[2] = getPixelSafe(currentSlice, x - 1, y - 1);
+                                	neighbors[3] = getPixelSafe(prevSlice, x, y);
+                                } else if (dx == 1 || dy == 0 || dz == 1) {
+                                	neighbors[0] = getPixelSafe(currentSlice, x, y - 1);
+                                	neighbors[1] = getPixelSafe(currentSlice, x + 1, y);
+                                	neighbors[2] = getPixelSafe(currentSlice, x + 1, y - 1);
+                                	neighbors[3] = getPixelSafe(prevSlice, x, y);
+                                } else if (dx == 0 || dy == 1 || dz == 1) {
+                                	neighbors[0] = getPixelSafe(currentSlice, x - 1, y);
+                                	neighbors[1] = getPixelSafe(currentSlice, x - 1, y + 1);
+                                	neighbors[2] = getPixelSafe(currentSlice, x, y + 1);
+                                	neighbors[3] = getPixelSafe(prevSlice, x, y);
+                                } else if (dx == 1 || dy == 1 || dz == 1) {
+                                	neighbors[0] = getPixelSafe(currentSlice, x, y + 1);
+                                	neighbors[1] = getPixelSafe(currentSlice, x + 1, y + 1);
+                                	neighbors[2] = getPixelSafe(currentSlice, x + 1, y);
+                                	neighbors[3] = getPixelSafe(prevSlice, x, y);
+                                }
+                                
+                                int pixelAverage = average(neighbors);
 
-                    newIp.putPixel(2 * x, 2 * y, avg1);
-                    newIp.putPixel(2 * x + 1, 2 * y, avg2);
-                    newIp.putPixel(2 * x, 2 * y + 1, avg3);
-                    newIp.putPixel(2 * x + 1, 2 * y + 1, avg4);
+                                // Set the new subpixel value
+                                newStack.getProcessor(subpixelZ + 1).putPixel(subpixelX, subpixelY, pixelAverage);
+                            }
+                        }
+                    }
                 }
             }
-            newStack.addSlice(newIp);
         }
-        ImagePlus newImp = new ImagePlus("Subpixel Averaging 3D", newStack);
+
+        ImagePlus newImp = new ImagePlus("Subpixel Averaging 3D: Linear Average", newStack);
         newImp.show();
+        
+        long endTime = System.currentTimeMillis();
+		long runTime = endTime - startTime;
+		double runTimeSeconds = runTime / 1000.0;
+		IJ.log("Total Run Time: " + runTimeSeconds + " seconds");
     }
 
     private int average(int... values) {
@@ -99,4 +159,13 @@ public class Linear_RE implements PlugInFilter {
         }
         return sum / values.length;
     }
+
+    private int getPixelSafe(ImageProcessor ip, int x, int y) {
+        if (x < 0 || x >= ip.getWidth() || y < 0 || y >= ip.getHeight()) {
+            return 0;
+        }
+        return ip.getPixel(x, y);
+    }
+   
+    
 }

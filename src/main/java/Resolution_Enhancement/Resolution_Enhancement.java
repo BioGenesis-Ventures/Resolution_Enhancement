@@ -40,7 +40,7 @@ import ij3d.Content;
 import ij3d.Image3DUniverse;
 
 
-public class RI_UserInterface implements PlugIn {
+public class Resolution_Enhancement implements PlugIn {
 
     @Override
     public void run(String arg) {
