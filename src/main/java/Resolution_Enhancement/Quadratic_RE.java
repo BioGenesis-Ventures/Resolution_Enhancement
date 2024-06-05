@@ -159,16 +159,14 @@ public class Quadratic_RE implements PlugInFilter {
     }
 
     private int quadraticFunction(int[] pixelValues) {
-        // Calculate the sum of the squares of the pixel values
+
         double sumOfSquares = 0.0;
         for (int pixel : pixelValues) {
             sumOfSquares += pixel * pixel;
         }
         
-        // Calculate the mean of the squares
         double meanOfSquares = sumOfSquares / pixelValues.length;
         
-        // Calculate the square root of the mean of the squares
         int pixelVal = (int) Math.sqrt(meanOfSquares);
         
         return pixelVal;

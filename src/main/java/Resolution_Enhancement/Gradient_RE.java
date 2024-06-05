@@ -14,8 +14,8 @@
     You should have received a copy of the GNU General Public License
     along with VolumetricAnalysis_Medicine. If not, see <http://www.gnu.org/licenses/>.
 
- PURPOSE: This code divides a stack of CT scans by 2 in every dimension and performs a 
- average to find the new voxel value based on neighboring voxels.
+ PURPOSE: This code divides a stack of CT scans by 2 in every dimension and finds
+ the new voxel value based on gradients established by neighboring voxels.
 
  Author: Jonathan Collard de Beaufort, jonathancdb@gmail.com
  May 2024
@@ -33,7 +33,7 @@ import ij.ImageStack;
 import ij.plugin.filter.PlugInFilter;
 import ij.process.ImageProcessor;
 
-public class Linear_RE implements PlugInFilter {
+public class Gradient_RE implements PlugInFilter {
 
     @Override
     public int setup(String arg, ImagePlus imp) {
@@ -53,6 +53,7 @@ public class Linear_RE implements PlugInFilter {
         
         int totalCalculations = width * height * depth;
         int calculationsCount = 0;
+        
         long startTime = System.currentTimeMillis();
 
         ImageStack newStack = new ImageStack(newWidth, newHeight);
@@ -69,9 +70,6 @@ public class Linear_RE implements PlugInFilter {
 
             for (int y = 0; y < height; y++) {
                 for (int x = 0; x < width; x++) {
-                    int[] coef_x = {1, -1, -1, 1};
-                    int[] coef_y = {1, 1, -1, -1};
-                    
                     // Update calculation status
                     calculationsCount += 1;
                     int percentageIncrement = (int) Math.ceil(totalCalculations / 10.0);
@@ -81,7 +79,7 @@ public class Linear_RE implements PlugInFilter {
 		                IJ.log("Status: " + percentage + "%");
 		            }
 
-                    for (int dz = 0; dz < 2; dz++) {
+					for (int dz = 0; dz < 2; dz++) {
                         for (int dy = 0; dy < 2; dy++) {
                             for (int dx = 0; dx < 2; dx++) {
                                 int subpixelX = 2 * x + dx;
@@ -114,25 +112,25 @@ public class Linear_RE implements PlugInFilter {
                                 	neighbors[0] = getPixelSafe(currentSlice, x - 1, y);
                                 	neighbors[1] = getPixelSafe(currentSlice, x, y - 1);
                                 	neighbors[2] = getPixelSafe(currentSlice, x - 1, y - 1);
-                                	neighbors[3] = getPixelSafe(nextSlice, x, y);
+                                	neighbors[3] = getPixelSafe(prevSlice, x, y);
                                 } else if (dx == 1 || dy == 0 || dz == 1) {
                                 	neighbors[0] = getPixelSafe(currentSlice, x, y - 1);
                                 	neighbors[1] = getPixelSafe(currentSlice, x + 1, y);
                                 	neighbors[2] = getPixelSafe(currentSlice, x + 1, y - 1);
-                                	neighbors[3] = getPixelSafe(nextSlice, x, y);
+                                	neighbors[3] = getPixelSafe(prevSlice, x, y);
                                 } else if (dx == 0 || dy == 1 || dz == 1) {
                                 	neighbors[0] = getPixelSafe(currentSlice, x - 1, y);
                                 	neighbors[1] = getPixelSafe(currentSlice, x - 1, y + 1);
                                 	neighbors[2] = getPixelSafe(currentSlice, x, y + 1);
-                                	neighbors[3] = getPixelSafe(nextSlice, x, y);
+                                	neighbors[3] = getPixelSafe(prevSlice, x, y);
                                 } else if (dx == 1 || dy == 1 || dz == 1) {
                                 	neighbors[0] = getPixelSafe(currentSlice, x, y + 1);
                                 	neighbors[1] = getPixelSafe(currentSlice, x + 1, y + 1);
                                 	neighbors[2] = getPixelSafe(currentSlice, x + 1, y);
-                                	neighbors[3] = getPixelSafe(nextSlice, x, y);
+                                	neighbors[3] = getPixelSafe(prevSlice, x, y);
                                 }
                                 
-                                int pixelAverage = average(neighbors);
+                                int pixelAverage = gradientFunction(neighbors);
 
                                 // Set the new subpixel value
                                 newStack.getProcessor(subpixelZ + 1).putPixel(subpixelX, subpixelY, pixelAverage);
@@ -143,7 +141,7 @@ public class Linear_RE implements PlugInFilter {
             }
         }
 
-        ImagePlus newImp = new ImagePlus("Subpixel Averaging 3D: Linear Average", newStack);
+        ImagePlus newImp = new ImagePlus("Subpixel Averaging 3D: RMS (Quadratic)", newStack);
         newImp.show();
         
         long endTime = System.currentTimeMillis();
@@ -152,20 +150,24 @@ public class Linear_RE implements PlugInFilter {
 		IJ.log("Total Run Time: " + runTimeSeconds + " seconds");
     }
 
-    private int average(int... values) {
-        int sum = 0;
-        for (int value : values) {
-            sum += value;
-        }
-        return sum / values.length;
-    }
-
     private int getPixelSafe(ImageProcessor ip, int x, int y) {
         if (x < 0 || x >= ip.getWidth() || y < 0 || y >= ip.getHeight()) {
             return 0;
         }
         return ip.getPixel(x, y);
     }
-   
-    
+
+    private int gradientFunction(int[] pixelValues) {
+
+        double sumOfSquares = 0.0;
+        for (int pixel : pixelValues) {
+            sumOfSquares += pixel * pixel;
+        }
+        
+        double meanOfSquares = sumOfSquares / pixelValues.length;
+        
+        int pixelVal = (int) Math.sqrt(meanOfSquares);
+        
+        return pixelVal;
+    }
 }
